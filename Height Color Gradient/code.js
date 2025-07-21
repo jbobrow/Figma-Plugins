@@ -19,11 +19,15 @@ figma.ui.onmessage = (msg) => {
     return;
   }
 
-  const maxHeight = Math.max(...bars.map(bar => bar.height));
+  // Decide height basis:
+  const useParentHeight = msg.useParentHeight;
+
+  const baseHeight = useParentHeight ? container.height : Math.max(...bars.map(bar => bar.height));
+
   const stops = msg.stops;
 
   for (const bar of bars) {
-    const ratio = bar.height / maxHeight * 100;
+    const ratio = (bar.height / baseHeight) * 100;
 
     const fillColor = getColorFromStops(ratio, stops);
 
@@ -44,7 +48,7 @@ figma.ui.onmessage = (msg) => {
     }
   }
 
-  figma.closePlugin("Multi-stop gradient applied!");
+  // figma.closePlugin("Multi-stop gradient applied!");
 };
 
 function getColorFromStops(percent, stops) {
