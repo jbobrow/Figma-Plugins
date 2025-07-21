@@ -77,10 +77,12 @@
     }
 
     .stop-row input[type="text"] {
-      width: 60px;
+      width: 72px;
       background: none;
+      padding: 0 12px 0 0;
       border-width: 0 1px 0 0;
       border-color: #f5f5f5;
+      color: #333;
     }
 
     .stop-row input[type="number"] {
@@ -88,6 +90,7 @@
       text-align: right;
       background: none;
       border: none;
+      color: #333;
     }
 
     /* Chrome, Safari, Edge, Opera */
@@ -108,6 +111,10 @@
       color: #888;
       cursor: pointer;
       font-size: 14px;
+    }
+
+    .stop-row button:hover {
+      color: #333;
     }
 
     #preview {
@@ -138,6 +145,7 @@
       border: 1px solid #eaeaea;
       border-radius: 4px;
       padding: 4px 8px;
+      color: #333;
     }
 
     button#addstop:hover {
@@ -202,10 +210,10 @@
     <div id="preview"></div>
     <div id="stops"></div>
     <button id="addStop">+ Add Stop</button>
-    <hr style="margin: 16px 0;">
+    <hr style="margin: 16px 0; border: none; border-top: 1px solid #ccc;" />
     <h3>Example Gradients</h3>
     <div class="presets" id="presets"></div>
-    <hr style="margin: 16px 0;">
+    <hr style="margin: 16px 0; border: none; border-top: 1px solid #ccc;" />
     <button id="apply" class="primary">Apply Gradient</button>
     <div>
       <label class="checkbox-container">
