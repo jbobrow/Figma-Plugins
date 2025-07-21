@@ -1,29 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      font-size: 12px;
+      padding: 16px;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .stop-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+      background-color: #eaeaea;
+      border-radius: 4px;
+      border: 1px solid #f5f5f5;
+      padding: 4px 8px;
+    }
+
+    .stop-row:hover {
+      border: 1px solid #ccc;
+    }
+
+    .drag-handle {
+      display: flex;
+      flex-wrap: wrap;
+      width: 10px;
+      height: 20px;
+      gap: 2px;
+      align-content: center;
+      justify-content: center;
+      cursor: grab;
+      margin-right: 4px;
+    }
+
+    .drag-handle div {
+      width: 3px;
+      height: 3px;
+      background: #888;
+      border-radius: 50%;
+    }
+
+    .stop-row input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      padding: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .stop-row input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+      border-radius: 4px;
+    }
+
+    .stop-row input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+
+    .stop-row input[type="text"] {
+      width: 60px;
+      background: none;
+      border-width: 0 1px 0 0;
+      border-color: #f5f5f5;
+    }
+
+    .stop-row input[type="number"] {
+      width: 32px;
+      text-align: right;
+      background: none;
+      border: none;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    .stop-row input[type="number"]::-webkit-outer-spin-button,
+    .stop-row input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    .stop-row input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .stop-row button {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #preview {
+      height: 24px;
+      border-radius: 4px;
+      margin: 8px 0 16px 0;
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset {
+      height: 24px;
+      width: 48px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #eaeaea;
+    }
+
+    .preset:hover {
+      border: 1px solid #ccc;
+    }
+
+    button#addstop {
+      border: 1px solid #eaeaea;
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
+
+    button#addstop:hover {
+      border: 1px solid #ccc;
+    }
+
+    button.primary {
+      width: 100%;
+      background-color: #18a0fb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 1em;
+    }
+  </style>
+</head>
 <body>
-  <h3>Gradient Colors</h3>
-  <label>Start Color: <input id="start" type="color" value="#ff0000"></label><br>
-  <label>End Color: <input id="end" type="color" value="#0000ff"></label><br>
-  <button id="apply">Apply</button>
+  <h3>Height Color Gradient</h3>
+  <div id="preview"></div>
+  <div id="stops"></div>
+  <button id="addStop">+ Add Stop</button>
+  <hr style="margin: 16px 0;">
+  <h3>Example Gradients</h3>
+  <div class="presets" id="presets"></div>
+  <hr style="margin: 16px 0;">
+  <button id="apply" class="primary">Apply Gradient</button>
 
-<script>
-  function hexToRgb(hex) {
-    const bigint = parseInt(hex.slice(1), 16);
-    return {
-      r: ((bigint >> 16) & 255) / 255,
-      g: ((bigint >> 8) & 255) / 255,
-      b: (bigint & 255) / 255
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    const stopsContainer = document.getElementById("stops");
+    const preview = document.getElementById("preview");
+    const presetsContainer = document.getElementById("presets");
+
+    const defaultPresets = [
+      [
+        { color: "#ff0000", position: 0 },
+        { color: "#0000ff", position: 100 }
+      ],
+      [
+        { color: "#00ff00", position: 0 },
+        { color: "#ffff00", position: 50 },
+        { color: "#ff00ff", position: 100 }
+      ],
+      [
+        { color: "#ffffff", position: 0 },
+        { color: "#000000", position: 100 }
+      ]
+    ];
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      return {
+        r: ((bigint >> 16) & 255) / 255,
+        g: ((bigint >> 8) & 255) / 255,
+        b: (bigint & 255) / 255
+      };
+    }
+
+    function createStop(hex = "#ff0000", position = 0) {
+      const div = document.createElement("div");
+      div.className = "stop-row";
+      div.innerHTML = `
+        <div class="drag-handle" title="Drag to reorder">
+          <div></div><div></div>
+          <div></div><div></div>
+          <div></div><div></div>
+        </div>
+        <input type="color" value="${hex}">
+        <input type="text" value="${hex}">
+        <input type="number" min="0" max="100" value="${position}">%
+        <button title="Remove">✕</button>
+      `;
+
+      const inputs = div.querySelectorAll("input");
+      const colorInput = inputs[0];
+      const hexInput = inputs[1];
+      const percentInput = inputs[2];
+      const removeBtn = div.querySelector("button");
+
+      colorInput.addEventListener("input", () => {
+        hexInput.value = colorInput.value;
+        updatePreview();
+      });
+
+      hexInput.addEventListener("input", () => {
+        colorInput.value = hexInput.value;
+        updatePreview();
+      });
+
+      percentInput.addEventListener("input", updatePreview);
+      removeBtn.addEventListener("click", () => {
+        div.remove();
+        updatePreview();
+      });
+
+      stopsContainer.appendChild(div);
+    }
+
+    function updatePreview() {
+      const stops = getStops();
+      const gradient = stops.map(s => `${s.color} ${s.position}%`).join(', ');
+      preview.style.background = `linear-gradient(to right, ${gradient})`;
+    }
+
+    function getStops() {
+      return Array.from(stopsContainer.children).map(child => {
+        const inputs = child.querySelectorAll("input");
+        return {
+          color: inputs[0].value,
+          position: parseFloat(inputs[2].value)
+        };
+      });
+    }
+
+    function applyPreset(stops) {
+      stopsContainer.innerHTML = '';
+      stops.forEach(stop => createStop(stop.color, stop.position));
+      updatePreview();
+    }
+
+    document.getElementById("addStop").onclick = () => {
+      createStop("#888888", 100);
+      updatePreview();
     };
-  }
 
-  document.getElementById("apply").onclick = () => {
-    const startColor = hexToRgb(document.getElementById("start").value);
-    const endColor = hexToRgb(document.getElementById("end").value);
-    parent.postMessage(
-      { pluginMessage: { type: 'apply-gradient', startColor, endColor } },
-      '*'
-    );
-  };
-</script>
+    document.getElementById("apply").onclick = () => {
+      const stops = getStops().map(s => ({
+        color: hexToRgb(s.color),
+        position: s.position
+      }));
+      parent.postMessage({ pluginMessage: { type: "apply-gradient", stops } }, "*");
+    };
+
+    defaultPresets.forEach(preset => {
+      const div = document.createElement("div");
+      div.className = "preset";
+      div.style.background = `linear-gradient(to right, ${preset.map(s => `${s.color} ${s.position}%`).join(', ')})`;
+      div.onclick = () => applyPreset(preset);
+      presetsContainer.appendChild(div);
+    });
+
+    // Enable drag handle with position swap logic
+    new Sortable(stopsContainer, {
+      animation: 150,
+      handle: ".drag-handle",
+      onEnd: (evt) => {
+        // Swap percentages between old and new index
+        const children = Array.from(stopsContainer.children);
+        if (evt.oldIndex !== evt.newIndex) {
+          const oldInputs = children[evt.oldIndex].querySelectorAll("input");
+          const newInputs = children[evt.newIndex].querySelectorAll("input");
+
+          const oldVal = oldInputs[2].value;
+          oldInputs[2].value = newInputs[2].value;
+          newInputs[2].value = oldVal;
+
+          updatePreview();
+        }
+      }
+    });
+
+    // Initial state
+    applyPreset(defaultPresets[0]);
+  </script>
 </body>
 </html>
