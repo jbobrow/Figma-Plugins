@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <style>
     body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #content {
       font-family: Inter, sans-serif;
       font-size: 12px;
       padding: 16px;
@@ -192,23 +197,24 @@
   </style>
 </head>
 <body>
-  <h3>Height Color Gradient</h3>
-  <div id="preview"></div>
-  <div id="stops"></div>
-  <button id="addStop">+ Add Stop</button>
-  <hr style="margin: 16px 0;">
-  <h3>Example Gradients</h3>
-  <div class="presets" id="presets"></div>
-  <hr style="margin: 16px 0;">
-  <button id="apply" class="primary">Apply Gradient</button>
-  <div>
-    <label class="checkbox-container">
-      <input type="checkbox" id="useParentHeight" />
-      <span class="custom-checkbox"></span>
-      Use parent height
-    </label>
+  <div id="content">
+    <h3>Preview Gradient</h3>
+    <div id="preview"></div>
+    <div id="stops"></div>
+    <button id="addStop">+ Add Stop</button>
+    <hr style="margin: 16px 0;">
+    <h3>Example Gradients</h3>
+    <div class="presets" id="presets"></div>
+    <hr style="margin: 16px 0;">
+    <button id="apply" class="primary">Apply Gradient</button>
+    <div>
+      <label class="checkbox-container">
+        <input type="checkbox" id="useParentHeight" />
+        <span class="custom-checkbox"></span>
+        Use parent height
+      </label>
+    </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
     const stopsContainer = document.getElementById("stops");
@@ -285,9 +291,11 @@
       removeBtn.addEventListener("click", () => {
         div.remove();
         updatePreview();
+        resizeToContent();
       });
 
       stopsContainer.appendChild(div);
+      resizeToContent();
     }
 
     function updatePreview() {
@@ -306,15 +314,25 @@
       });
     }
 
+    function resizeToContent() {
+      requestAnimationFrame(() => {
+        const content = document.getElementById('content');
+        const height = content.scrollHeight;
+        parent.postMessage({ pluginMessage: { type: 'resize-ui', height } }, '*');
+      });
+    }
+
     function applyPreset(stops) {
       stopsContainer.innerHTML = '';
       stops.forEach(stop => createStop(stop.color, stop.position));
       updatePreview();
+      resizeToContent();
     }
 
     document.getElementById("addStop").onclick = () => {
       createStop("#888888", 100);
       updatePreview();
+      resizeToContent();
     };
 
     document.getElementById("apply").onclick = () => {
@@ -356,6 +374,7 @@
 
     // Initial state
     applyPreset(defaultPresets[0]);
+    resizeToContent();
   </script>
 </body>
 </html>

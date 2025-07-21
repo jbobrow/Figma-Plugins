@@ -1,6 +1,11 @@
 figma.showUI(__html__, { width: 320, height: 480 });
 
 figma.ui.onmessage = (msg) => {
+  if (msg.type === 'resize-ui' && msg.height) {
+    figma.ui.resize(320, msg.height);
+    return;
+  }
+  
   if (msg.type !== 'apply-gradient') return;
 
   const selection = figma.currentPage.selection;
