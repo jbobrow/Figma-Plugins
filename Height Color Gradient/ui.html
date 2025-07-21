@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h3>Gradient Colors</h3>
+  <label>Start Color: <input id="start" type="color" value="#ff0000"></label><br>
+  <label>End Color: <input id="end" type="color" value="#0000ff"></label><br>
+  <button id="apply">Apply</button>
+
+<script>
+  function hexToRgb(hex) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return {
+      r: ((bigint >> 16) & 255) / 255,
+      g: ((bigint >> 8) & 255) / 255,
+      b: (bigint & 255) / 255
+    };
+  }
+
+  document.getElementById("apply").onclick = () => {
+    const startColor = hexToRgb(document.getElementById("start").value);
+    const endColor = hexToRgb(document.getElementById("end").value);
+    parent.postMessage(
+      { pluginMessage: { type: 'apply-gradient', startColor, endColor } },
+      '*'
+    );
+  };
+</script>
+</body>
+</html>
