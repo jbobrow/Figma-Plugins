@@ -15,8 +15,17 @@ figma.ui.onmessage = (msg) => {
     return;
   }
 
-  const validTypes = ["FRAME", "COMPONENT", "INSTANCE"];
-  const containers = selection.filter(node => validTypes.includes(node.type));
+  const validTypes = ["FRAME", "COMPONENT", "INSTANCE", "COMPONENT_SET"];
+  
+  let containers = [];
+
+  for (const node of selection) {
+    if (["FRAME", "COMPONENT", "INSTANCE"].includes(node.type)) {
+      containers.push(node);
+    } else if (node.type === "COMPONENT_SET") {
+      containers.push(...node.children.filter(c => c.type === "COMPONENT"));
+    }
+  }
 
   if (containers.length === 0) {
     figma.notify("No valid frames or components selected.");
