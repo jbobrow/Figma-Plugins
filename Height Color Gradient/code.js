@@ -9,12 +9,18 @@ figma.ui.onmessage = (msg) => {
   if (msg.type !== 'apply-gradient') return;
 
   const selection = figma.currentPage.selection;
-  if (selection.length !== 1 || selection[0].type !== 'FRAME') {
-    figma.notify("Please select a single frame with bar elements.");
+  if (selection.length !== 1) {
+    figma.notify("Please select a single container (frame, component, or instance).");
     return;
   }
 
   const container = selection[0];
+  const validTypes = ["FRAME", "COMPONENT", "INSTANCE", "COMPONENT_SET"];
+  if (!validTypes.includes(container.type)) {
+    figma.notify("Selected item must be a frame, component, or instance.");
+    return;
+  }
+  
   const bars = container.children.filter(node =>
     node.type === "RECTANGLE" || node.type === "FRAME"
   );
