@@ -300,6 +300,7 @@
         div.remove();
         updatePreview();
         resizeToContent();
+        updateRemoveButtons();
       });
 
       stopsContainer.appendChild(div);
@@ -368,12 +369,14 @@
       stops.forEach(stop => createStop(stop.color, stop.position));
       updatePreview();
       resizeToContent();
+      updateRemoveButtons();
     }
 
     document.getElementById("addStop").onclick = () => {
       createStop("#888888", 100);
       updatePreview();
       resizeToContent();
+      updateRemoveButtons();
     };
 
     document.getElementById("apply").onclick = () => {
@@ -402,6 +405,16 @@
         updatePreview();
       }
     });
+
+    function updateRemoveButtons() {
+      const stops = stopsContainer.querySelectorAll(".stop-row");
+      const showRemove = stops.length > 2;
+
+      stops.forEach(stop => {
+        const btn = stop.querySelector("button");
+        btn.style.visibility = showRemove ? "visible" : "hidden";
+      });
+    }
 
     // Initial state
     applyPreset(defaultPresets[0]);
