@@ -322,6 +322,39 @@
       });
     }
 
+    function handleSmartReorder(oldIndex, newIndex) {
+      const stops = Array.from(stopsContainer.children);
+      const moved = stops[newIndex];
+      const movedInput = moved.querySelectorAll("input")[2];
+
+      if (Math.abs(oldIndex - newIndex) === 1) {
+        // Simple swap
+        const swapped = stops[oldIndex];
+        const swappedInput = swapped.querySelectorAll("input")[2];
+
+        const tmp = movedInput.value;
+        movedInput.value = swappedInput.value;
+        swappedInput.value = tmp;
+        return;
+      }
+
+      // Determine new value based on position
+      if (newIndex === 0) {
+        movedInput.value = 0;
+        // bump old first (now at index 1) if needed
+        const second = stops[1].querySelectorAll("input")[2];
+        if (parseFloat(second.value) <= 0) second.value = 10;
+      } else if (newIndex === stops.length - 1) {
+        movedInput.value = 100;
+        const secondLast = stops[stops.length - 2].querySelectorAll("input")[2];
+        if (parseFloat(secondLast.value) >= 100) secondLast.value = 90;
+      } else {
+        const before = parseFloat(stops[newIndex - 1].querySelectorAll("input")[2].value);
+        const after = parseFloat(stops[newIndex + 1].querySelectorAll("input")[2].value);
+        movedInput.value = Math.round((before + after) / 2);
+      }
+    }
+
     function resizeToContent() {
       requestAnimationFrame(() => {
         const content = document.getElementById('content');
@@ -364,19 +397,9 @@
     new Sortable(stopsContainer, {
       animation: 150,
       handle: ".drag-handle",
-      onEnd: (evt) => {
-        // Swap percentages between old and new index
-        const children = Array.from(stopsContainer.children);
-        if (evt.oldIndex !== evt.newIndex) {
-          const oldInputs = children[evt.oldIndex].querySelectorAll("input");
-          const newInputs = children[evt.newIndex].querySelectorAll("input");
-
-          const oldVal = oldInputs[2].value;
-          oldInputs[2].value = newInputs[2].value;
-          newInputs[2].value = oldVal;
-
-          updatePreview();
-        }
+      onEnd: ({ oldIndex, newIndex }) => {
+        handleSmartReorder(oldIndex, newIndex);
+        updatePreview();
       }
     });
 
