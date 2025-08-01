@@ -5,62 +5,79 @@ figma.ui.onmessage = (msg) => {
     figma.ui.resize(320, msg.height);
     return;
   }
-  
+
   if (msg.type !== 'apply-gradient') return;
 
   const selection = figma.currentPage.selection;
-  if (selection.length !== 1) {
-    figma.notify("Please select a single container (frame, component, or instance).");
+
+  if (selection.length === 0) {
+    figma.notify("Please select at least one frame or component.");
     return;
   }
 
-  const container = selection[0];
-  const validTypes = ["FRAME", "COMPONENT", "INSTANCE", "COMPONENT_SET"];
-  if (!validTypes.includes(container.type)) {
-    figma.notify("Selected item must be a frame, component, or instance.");
+  const validTypes = ["FRAME", "COMPONENT", "INSTANCE"];
+  const containers = selection.filter(node => validTypes.includes(node.type));
+
+  if (containers.length === 0) {
+    figma.notify("No valid frames or components selected.");
     return;
   }
-  
-  const bars = container.children.filter(node =>
-    node.type === "RECTANGLE" || node.type === "FRAME"
-  );
-
-  if (bars.length === 0) {
-    figma.notify("No bars found.");
-    return;
-  }
-
-  // Decide height basis:
-  const useParentHeight = msg.useParentHeight;
-
-  const baseHeight = useParentHeight ? container.height : Math.max(...bars.map(bar => bar.height));
 
   const stops = msg.stops;
+  const useParentHeight = msg.useParentHeight;
 
-  for (const bar of bars) {
-    const ratio = (bar.height / baseHeight) * 100;
+  for (const container of containers) {
+    const bars = findBarNodes(container);
 
-    const fillColor = getColorFromStops(ratio, stops);
+    if (bars.length === 0) {
+      console.log(`No bars found in "${container.name}"`);
+      continue;
+    }
 
-    const fill = {
-      type: "SOLID",
-      color: fillColor
-    };
+    const baseHeight = useParentHeight
+      ? container.height
+      : Math.max(...bars.map(bar => bar.height));
 
-    if (bar.type === "RECTANGLE") {
-      bar.fills = [fill];
-    } else if (bar.type === "FRAME") {
-      try {
+    for (const bar of bars) {
+      const ratio = (bar.height / baseHeight) * 100;
+      const fillColor = getColorFromStops(ratio, stops);
+
+      const fill = {
+        type: "SOLID",
+        color: fillColor
+      };
+
+      if (bar.type === "RECTANGLE") {
         bar.fills = [fill];
-      } catch (e) {
-        const bg = bar.findOne(n => n.type === "RECTANGLE");
-        if (bg) bg.fills = [fill];
+      } else if (bar.type === "FRAME") {
+        try {
+          bar.fills = [fill];
+        } catch (e) {
+          const bg = bar.findOne(n => n.type === "RECTANGLE");
+          if (bg) bg.fills = [fill];
+        }
       }
     }
   }
 
-  // figma.closePlugin("Multi-stop gradient applied!");
+  figma.notify(`Gradient applied to ${containers.length} container(s).`);
 };
+
+function findBarNodes(node) {
+  const bars = [];
+
+  if ("children" in node) {
+    for (const child of node.children) {
+      if (child.type === "RECTANGLE" || child.type === "FRAME") {
+        bars.push(child);
+      } else if ("children" in child) {
+        bars.push(...findBarNodes(child)); // recurse
+      }
+    }
+  }
+
+  return bars;
+}
 
 function getColorFromStops(percent, stops) {
   if (percent <= stops[0].position) return stops[0].color;
